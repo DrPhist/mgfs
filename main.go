@@ -1,4 +1,3 @@
-// mountMgo access mongodb databases through fusefs
 package main
 
 import (
@@ -8,9 +7,11 @@ import (
 	"github.com/codegangsta/cli"
 )
 
+var appName string = "mgfs"
+
 func main() {
 	app := cli.NewApp()
-	app.Name = "mountMgo"
+	app.Name = appName
 	app.Usage = "mount a mongodb database"
 	app.Version = "0.1"
 
@@ -21,7 +22,7 @@ func main() {
 	app.Action = func(c *cli.Context) {
 
 		if len(c.Args()) != 2 {
-			log.Fatal("Usage: mountMgo <dbname> <mountpoint>")
+			log.Fatal("Usage: " + appName + " <dbname> <mountpoint>")
 		}
 
 		dbName := c.Args()[0]
