@@ -1,34 +1,37 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
-	"github.com/cryptix/go/logging"
+
+	"golang.org/x/net/context"
 )
 
 func mount(point string) {
 
 	// startup mount
 	c, err := fuse.Mount(point)
-	logging.CheckFatal(err)
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
 	defer c.Close()
 
-	slog.Noticef("Mounted: ", point)
+	log.Println("Mounted: ", point)
 	err = fs.Serve(c, mgoFS{})
-	logging.CheckFatal(err)
 
 	// check if the mount process has an error to report
 	<-c.Ready
-	logging.CheckFatal(c.MountError)
 }
 
 // mgoFS implements my mgo fuse filesystem
 type mgoFS struct{}
 
-func (mgoFS) Root() (fs.Node, fuse.Error) {
-	slog.Noticef("returning root node")
+func (mgoFS) Root() (fs.Node, error) {
+	log.Println("returning root node")
 	return Dir{"Root"}, nil
 }
 
@@ -37,20 +40,21 @@ type Dir struct {
 	name string
 }
 
-func (d Dir) Attr() fuse.Attr {
-	slog.Noticef("Dir.Attr() for ", d.name)
-	return fuse.Attr{Inode: 1, Mode: os.ModeDir | 0555}
+func (d Dir) Attr(a *fuse.Attr) {
+	log.Println("Dir.Attr() for ", d.name)
+	a.Inode = 1
+	a.Mode = os.ModeDir | 0555
 }
 
-func (Dir) Lookup(name string, intr fs.Intr) (fs.Node, fuse.Error) {
-	slog.Noticef("Dir.Lookup():", name)
+func (Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
+	log.Println("Dir.Lookup():", name)
 
 	db, s := getDb()
 	defer s.Close()
 
 	names, err := db.CollectionNames()
 	if err != nil {
-		slog.Error(err)
+		log.Panic(err)
 		return nil, fuse.EIO
 	}
 
@@ -63,15 +67,15 @@ func (Dir) Lookup(name string, intr fs.Intr) (fs.Node, fuse.Error) {
 	return nil, fuse.ENOENT
 }
 
-func (d Dir) ReadDir(intr fs.Intr) ([]fuse.Dirent, fuse.Error) {
-	slog.Noticef("Dir.ReadDir():", d.name)
+func (d Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
+	log.Println("Dir.ReadDirAll():", d.name)
 
 	db, s := getDb()
 	defer s.Close()
 
 	names, err := db.CollectionNames()
 	if err != nil {
-		slog.Error(err)
+		log.Panic(err)
 		return nil, fuse.EIO
 	}
 

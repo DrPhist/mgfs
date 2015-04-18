@@ -2,13 +2,11 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/cryptix/go/logging"
 )
-
-var slog = logging.Logger("mountMgo")
 
 func main() {
 	app := cli.NewApp()
@@ -23,7 +21,7 @@ func main() {
 	app.Action = func(c *cli.Context) {
 
 		if len(c.Args()) != 2 {
-			slog.Fatal("Usage: mountMgo <dbname> <mountpoint>")
+			log.Fatal("Usage: mountMgo <dbname> <mountpoint>")
 		}
 
 		dbName := c.Args()[0]

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
+	"golang.org/x/net/context"
 	"labix.org/v2/mgo/bson"
 )
 
@@ -16,14 +18,13 @@ type CollFile struct {
 	Fattr  fuse.Attr
 }
 
-func (f CollFile) Attr() fuse.Attr {
-	slog.Noticef("CollFile.Attr() for: %+v", f)
-
-	return fuse.Attr{Mode: os.ModeDir | 0400}
+func (f CollFile) Attr(a *fuse.Attr) {
+	log.Println("CollFile.Attr() for: %+v", f)
+	a.Mode = os.ModeDir | 0400
 }
 
-func (c CollFile) Lookup(fname string, intr fs.Intr) (fs.Node, fuse.Error) {
-	slog.Noticef("CollFile[%s].Lookup(): %s\n", c.Name, fname)
+func (c CollFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {
+	log.Println("CollFile[%s].Lookup(): %s\n", c.Name, fname)
 
 	if !bson.IsObjectIdHex(fname) {
 		return nil, fuse.ENOENT
@@ -35,7 +36,7 @@ func (c CollFile) Lookup(fname string, intr fs.Intr) (fs.Node, fuse.Error) {
 	var f DocumentFile
 	err := db.C(c.Name).FindId(bson.ObjectIdHex(fname)).One(&f)
 	if err != nil {
-		slog.Error(err)
+		log.Panic(err)
 		return nil, fuse.EIO
 	}
 
@@ -44,8 +45,8 @@ func (c CollFile) Lookup(fname string, intr fs.Intr) (fs.Node, fuse.Error) {
 	return f, nil
 }
 
-func (c CollFile) ReadDir(intr fs.Intr) (ents []fuse.Dirent, ferr fuse.Error) {
-	slog.Notice("CollFile.ReadDir():", c.Name)
+func (c CollFile) ReadDirAll(ctx context.Context) (ents []fuse.Dirent, ferr error) {
+	log.Println("CollFile.ReadDirAll():", c.Name)
 
 	db, s := getDb()
 	defer s.Close()
@@ -58,7 +59,7 @@ func (c CollFile) ReadDir(intr fs.Intr) (ents []fuse.Dirent, ferr fuse.Error) {
 	}
 
 	if err := iter.Err(); err != nil {
-		slog.Error(err)
+		log.Panic(err)
 		return nil, fuse.EIO
 	}
 
