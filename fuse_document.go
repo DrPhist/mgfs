@@ -21,25 +21,39 @@ type DocumentFile struct {
 }
 
 func (d DocumentFile) Attr(a *fuse.Attr) {
-	log.Println("DocumentFile.Attr() for: %+v", d)
+	log.Printf("DocumentFile.Attr() for: %+v", d)
+	strval, err := d.readDocument()
+
+	if err != nil {
+		return
+	}
 
 	now := time.Now()
 	a.Mode = 0400
-	a.Size = 42
+	a.Size = uint64(len(strval))
 	a.Ctime = now
 	a.Atime = now
 	a.Mtime = now
 }
 
 func (d DocumentFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {
-	log.Println("DocumentFile[%s].Lookup(): %s\n", d.coll, fname)
+	log.Printf("DocumentFile[%s].Lookup(): %s\n", d.coll, fname)
 
 	return nil, fuse.ENOENT
 }
 
 func (d DocumentFile) ReadAll(ctx context.Context) ([]byte, error) {
-	log.Println("DocumentFile[%s].ReadAll(): %s\n", d.coll, d.Id)
+	log.Printf("DocumentFile[%s].ReadAll(): %s\n", d.coll, d.Id)
 
+	strval, err := d.readDocument()
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(strval), nil
+}
+
+func (d DocumentFile) readDocument() (string, error) {
 	db, s := getDb()
 	defer s.Close()
 
@@ -47,14 +61,15 @@ func (d DocumentFile) ReadAll(ctx context.Context) ([]byte, error) {
 	err := db.C(d.coll).FindId(d.Id).One(&f)
 	if err != nil {
 		log.Fatal(err)
-		return nil, fuse.EIO
+		return "", fuse.EIO
 	}
 
 	buf, err := json.MarshalIndent(f, "", "    ")
 	if err != nil {
 		log.Fatal(err)
-		return nil, fuse.EIO
+		return "", fuse.EIO
 	}
 
-	return buf, nil
+	strval := string(buf) + "\n"
+	return strval, nil
 }

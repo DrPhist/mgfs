@@ -19,12 +19,12 @@ type CollFile struct {
 }
 
 func (f CollFile) Attr(a *fuse.Attr) {
-	log.Println("CollFile.Attr() for: %+v", f)
+	log.Printf("CollFile.Attr() for: %+v", f)
 	a.Mode = os.ModeDir | 0400
 }
 
 func (c CollFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {
-	log.Println("CollFile[%s].Lookup(): %s\n", c.Name, fname)
+	log.Printf("CollFile[%s].Lookup(): %s\n", c.Name, fname)
 
 	if !bson.IsObjectIdHex(fname) {
 		return nil, fuse.ENOENT
@@ -46,7 +46,7 @@ func (c CollFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {
 }
 
 func (c CollFile) ReadDirAll(ctx context.Context) (ents []fuse.Dirent, ferr error) {
-	log.Println("CollFile.ReadDirAll():", c.Name)
+	log.Println("CollFile.ReadDirAll(): ", c.Name)
 
 	db, s := getDb()
 	defer s.Close()
