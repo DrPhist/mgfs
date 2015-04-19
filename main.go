@@ -30,7 +30,7 @@ func main() {
 		mountPoint := c.Args()[1]
 
 		initDb(dbHost, dbName)
-		mount(mountPoint)
+		mount(mountPoint, appName)
 	}
 
 	app.Run(os.Args)

@@ -10,10 +10,15 @@ import (
 	"golang.org/x/net/context"
 )
 
-func mount(point string) {
+func mount(point string, fsname string) {
 
 	// startup mount
-	c, err := fuse.Mount(point)
+	c, err := fuse.Mount(
+		point,
+		fuse.FSName(fsname),
+		fuse.VolumeName(fsname),
+		fuse.LocalVolume(),
+	)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
@@ -22,9 +27,15 @@ func mount(point string) {
 
 	log.Println("Mounted: ", point)
 	err = fs.Serve(c, mgoFS{})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// check if the mount process has an error to report
 	<-c.Ready
+	if err := c.MountError; err != nil {
+		log.Fatal(err)
+	}
 }
 
 // mgoFS implements my mgo fuse filesystem
