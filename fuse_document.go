@@ -22,7 +22,7 @@ type DocumentFile struct {
 
 func (d DocumentFile) Attr(a *fuse.Attr) {
 	log.Printf("DocumentFile.Attr() for: %+v", d)
-	strval, err := d.readDocument()
+	_, size, err := d.readDocument()
 
 	if err != nil {
 		return
@@ -30,7 +30,7 @@ func (d DocumentFile) Attr(a *fuse.Attr) {
 
 	now := time.Now()
 	a.Mode = 0400
-	a.Size = uint64(len(strval))
+	a.Size = size
 	a.Ctime = now
 	a.Atime = now
 	a.Mtime = now
@@ -45,7 +45,7 @@ func (d DocumentFile) Lookup(ctx context.Context, fname string) (fs.Node, error)
 func (d DocumentFile) ReadAll(ctx context.Context) ([]byte, error) {
 	log.Printf("DocumentFile[%s].ReadAll(): %s\n", d.coll, d.Id)
 
-	strval, err := d.readDocument()
+	strval, _, err := d.readDocument()
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,8 @@ func (d DocumentFile) ReadAll(ctx context.Context) ([]byte, error) {
 	return []byte(strval), nil
 }
 
-func (d DocumentFile) readDocument() (string, error) {
+// Read a document and return it as a JSON string
+func (d DocumentFile) readDocument() (string, uint64, error) {
 	db, s := getDb()
 	defer s.Close()
 
@@ -61,15 +62,15 @@ func (d DocumentFile) readDocument() (string, error) {
 	err := db.C(d.coll).FindId(d.Id).One(&f)
 	if err != nil {
 		log.Fatal(err)
-		return "", fuse.EIO
+		return "", 0, fuse.EIO
 	}
 
 	buf, err := json.MarshalIndent(f, "", "    ")
 	if err != nil {
 		log.Fatal(err)
-		return "", fuse.EIO
+		return "", 0, fuse.EIO
 	}
 
 	strval := string(buf) + "\n"
-	return strval, nil
+	return strval, uint64(len(buf)), nil
 }

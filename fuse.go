@@ -27,9 +27,7 @@ func mount(point string, fsname string) {
 
 	log.Println("Mounted: ", point)
 	err = fs.Serve(c, mgoFS{})
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err, false)
 
 	// check if the mount process has an error to report
 	<-c.Ready

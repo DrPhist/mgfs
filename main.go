@@ -10,6 +10,9 @@ import (
 var appName string = "mgfs"
 
 func main() {
+	log.SetFlags(0)
+	log.SetPrefix(appName + ": ")
+
 	app := cli.NewApp()
 	app.Name = appName
 	app.Usage = "mount a mongodb database"

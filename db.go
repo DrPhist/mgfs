@@ -12,9 +12,7 @@ var getDb func() (*mgo.Database, *mgo.Session)
 func initDb(dbHost, dbName string) {
 	url := fmt.Sprintf("mongodb://%s/%s", dbHost, dbName)
 	mgoSession, err := mgo.Dial(url)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err, true)
 
 	log.Println("Dialed:", url)
 
