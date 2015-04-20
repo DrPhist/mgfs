@@ -11,7 +11,6 @@ Allows mounting a MongoDb database as a file system via [FUSE](https://bazil.org
 
 
 ## Todo
-- [x] Collections are only read on startup
 - [ ] Documents in `xxx.index` collections don't have `_id` fields, so they aren't listed yet
 - [ ] Support writes on [GridFS](http://www.mongodb.org/display/DOCS/GridFS) (http://godoc.org/labix.org/v2/mgo#GridFS)
 - [ ] Show file name instead of ID for GridFS files
