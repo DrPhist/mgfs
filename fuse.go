@@ -10,7 +10,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func mount(point string, fsname string) {
+func mount(point string, fsname string) error {
 
 	// startup mount
 	c, err := fuse.Mount(
@@ -19,21 +19,22 @@ func mount(point string, fsname string) {
 		fuse.VolumeName(fsname),
 		fuse.LocalVolume(),
 	)
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
+	checkErrorAndExit(err, 1)
 	defer c.Close()
 
 	log.Println("Mounted: ", point)
-	err = fs.Serve(c, mgoFS{})
-	checkError(err, false)
+	if err = fs.Serve(c, mgoFS{}); err != nil {
+		log.Fatal(err)
+		return err
+	}
 
 	// check if the mount process has an error to report
 	<-c.Ready
 	if err := c.MountError; err != nil {
 		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
 // mgoFS implements my mgo fuse filesystem
@@ -57,6 +58,11 @@ func (d Dir) Attr(a *fuse.Attr) {
 
 func (Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {
 	log.Println("Dir.Lookup():", name)
+
+	// Check if lookup is on the GridFS
+	if name == gridfsPrefix {
+		return GridFs{Name: gridfsPrefix}, nil
+	}
 
 	db, s := getDb()
 	defer s.Close()
@@ -88,8 +94,12 @@ func (d Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 		return nil, fuse.EIO
 	}
 
-	ents := make([]fuse.Dirent, 0, len(names))
+	ents := make([]fuse.Dirent, 0, len(names)+1) // one more for GridFS
 
+	// Append GridFS prefix
+	ents = append(ents, fuse.Dirent{Name: gridfsPrefix, Type: fuse.DT_Dir})
+
+	// Append the rest of the collections
 	for _, name := range names {
 		ents = append(ents, fuse.Dirent{Name: name, Type: fuse.DT_Dir})
 	}

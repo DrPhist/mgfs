@@ -5,11 +5,16 @@ import (
 	"os"
 )
 
-func checkError(err error, exit bool) {
+// Log error if any
+func checkError(err error) {
 	if err != nil {
 		log.Fatal(err)
-		if exit {
-			os.Exit(1)
-		}
+	}
+}
+
+func checkErrorAndExit(err error, status int) {
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(status)
 	}
 }
