@@ -25,9 +25,16 @@ type GridFsFile struct {
 func (g GridFsFile) Attr(a *fuse.Attr) {
 	log.Printf("GridFsFile.Attr() for: %+v", g)
 
+	db, s := getDb()
+	defer s.Close()
+
+	file, err := db.GridFS(g.Prefix).OpenId(g.Id)
+	checkError(err)
+	defer file.Close()
+
 	now := time.Now()
 	a.Mode = 0400
-	a.Size = 100
+	a.Size = uint64(file.Size())
 	a.Ctime = now
 	a.Atime = now
 	a.Mtime = now
