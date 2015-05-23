@@ -19,6 +19,10 @@ type DocumentFile struct {
 
 	Dirent fuse.Dirent
 	Fattr  fuse.Attr
+
+	CTime time.Time
+	ATime time.Time
+	MTime time.Time
 }
 
 func (d DocumentFile) Attr(a *fuse.Attr) {
@@ -29,14 +33,20 @@ func (d DocumentFile) Attr(a *fuse.Attr) {
 		return
 	}
 
-	now := time.Now()
+	if d.CTime.IsZero() {
+		now := time.Now()
+		d.CTime = now
+		d.ATime = now
+		d.MTime = now
+	}
+
 	a.Uid = uint32(os.Getuid())
 	a.Gid = uint32(os.Getgid())
 	a.Mode = 0600
 	a.Size = size
-	a.Ctime = now
-	a.Atime = now
-	a.Mtime = now
+	a.Ctime = d.CTime
+	a.Atime = d.ATime
+	a.Mtime = d.MTime
 }
 
 func (d DocumentFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {
@@ -52,6 +62,8 @@ func (d DocumentFile) ReadAll(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	d.ATime = time.Now() // update last access time
 
 	return []byte(strval), nil
 }
@@ -79,7 +91,7 @@ func (d DocumentFile) readDocument() (string, uint64, error) {
 }
 
 func (d DocumentFile) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) error {
-	log.Printf("DocumentFile.Write(%s): %#v \n", d.Id, req)
+	log.Printf("DocumentFile.Write(%s) \n", d.Id)
 
 	db, s := getDb()
 	defer s.Close()
@@ -97,6 +109,7 @@ func (d DocumentFile) Write(ctx context.Context, req *fuse.WriteRequest, resp *f
 		log.Printf("Could not update the document[%s]: %s \n", d.Id.Hex(), err.Error())
 		return fuse.EIO
 	}
+	d.MTime = time.Now() // update last modified time
 
 	return nil
 }
