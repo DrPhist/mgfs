@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"os"
 	"time"
 
 	"bazil.org/fuse"
@@ -29,7 +30,9 @@ func (d DocumentFile) Attr(a *fuse.Attr) {
 	}
 
 	now := time.Now()
-	a.Mode = 0400
+	a.Uid = uint32(os.Getuid())
+	a.Gid = uint32(os.Getgid())
+	a.Mode = 0600
 	a.Size = size
 	a.Ctime = now
 	a.Atime = now
@@ -73,4 +76,27 @@ func (d DocumentFile) readDocument() (string, uint64, error) {
 
 	strval := string(buf) + "\n"
 	return strval, uint64(len(buf)), nil
+}
+
+func (d DocumentFile) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) error {
+	log.Printf("DocumentFile.Write(%s): %#v \n", d.Id, req)
+
+	db, s := getDb()
+	defer s.Close()
+
+	doc := make(map[string]string)
+	err := json.Unmarshal(req.Data, &doc)
+	if err != nil {
+		return fuse.EIO
+	}
+
+	delete(doc, "_id") // _id cannot be updated!
+
+	err = db.C(d.coll).UpdateId(d.Id, doc)
+	if err != nil {
+		log.Printf("Could not update the document[%s]: %s \n", d.Id.Hex(), err.Error())
+		return fuse.EIO
+	}
+
+	return nil
 }

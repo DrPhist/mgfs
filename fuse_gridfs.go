@@ -21,6 +21,8 @@ type GridFs struct {
 func (g GridFs) Attr(a *fuse.Attr) {
 	log.Printf("GridFs.Attr() for: %+v", g)
 	a.Mode = os.ModeDir | 0400
+	a.Uid = uint32(os.Getuid())
+	a.Gid = uint32(os.Getgid())
 }
 
 func (g GridFs) Lookup(ctx context.Context, fname string) (fs.Node, error) {

@@ -1,9 +1,9 @@
 package main
 
 import (
-	//"encoding/json"
 	"io/ioutil"
 	"log"
+	"os"
 	"time"
 
 	"bazil.org/fuse"
@@ -34,6 +34,8 @@ func (g GridFsFile) Attr(a *fuse.Attr) {
 
 	now := time.Now()
 	a.Mode = 0400
+	a.Uid = uint32(os.Getuid())
+	a.Gid = uint32(os.Getgid())
 	a.Size = uint64(file.Size())
 	a.Ctime = now
 	a.Atime = now

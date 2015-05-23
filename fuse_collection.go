@@ -20,7 +20,9 @@ type CollFile struct {
 
 func (f CollFile) Attr(a *fuse.Attr) {
 	log.Printf("CollFile.Attr() for: %+v", f)
-	a.Mode = os.ModeDir | 0400
+	a.Mode = os.ModeDir | 0700
+	a.Uid = uint32(os.Getuid())
+	a.Gid = uint32(os.Getgid())
 }
 
 func (c CollFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {
