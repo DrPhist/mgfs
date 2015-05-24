@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -28,6 +29,11 @@ func (f CollFile) Attr(a *fuse.Attr) {
 func (c CollFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {
 	log.Printf("CollFile[%s].Lookup(): %s\n", c.Name, fname)
 
+	if !strings.HasSuffix(fname, ".json") {
+		return nil, fuse.ENOENT
+	}
+	fname = fname[0 : len(fname)-5]
+
 	if !bson.IsObjectIdHex(fname) {
 		return nil, fuse.ENOENT
 	}
@@ -38,7 +44,7 @@ func (c CollFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {
 	var f DocumentFile
 	err := db.C(c.Name).FindId(bson.ObjectIdHex(fname)).One(&f)
 	if err != nil {
-		log.Panic(err)
+		log.Printf("Error while looking up %s: %s \n", fname, err.Error())
 		return nil, fuse.EIO
 	}
 
@@ -57,7 +63,7 @@ func (c CollFile) ReadDirAll(ctx context.Context) (ents []fuse.Dirent, ferr erro
 
 	var f DocumentFile
 	for iter.Next(&f) {
-		ents = append(ents, fuse.Dirent{Name: f.Id.Hex(), Type: fuse.DT_File})
+		ents = append(ents, fuse.Dirent{Name: f.Id.Hex() + ".json", Type: fuse.DT_File})
 	}
 
 	if err := iter.Err(); err != nil {
