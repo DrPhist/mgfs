@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -101,6 +102,9 @@ func (d Dir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 
 	// Append the rest of the collections
 	for _, name := range names {
+		if strings.HasSuffix(name, ".indexes") {
+			continue
+		}
 		ents = append(ents, fuse.Dirent{Name: name, Type: fuse.DT_Dir})
 	}
 	return ents, nil
