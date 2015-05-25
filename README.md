@@ -3,17 +3,22 @@ mgfs
 
 Allows mounting a MongoDb database as a file system via [FUSE](https://bazil.org/fuse/).
 
+## Installation
+You need to have [Golang](https://golang.org/doc/install) installed.
+Open your terminal, and run `go install github.com/amsa/mgfs`. Now you should be able to
+run `mgfs`.
 
-## Working
-* `ls mountpoint/` lists all collections in that database
-* `ls mountpoint/collection` lists all documents with their `_id` as filename
-* `cat mountpoint/collection/document` returns the document content with `json.MarshalIndent`
+## How to use
+First mount your MongoDb database: `mgfs test /path/to/mount/dir`. You may now go to the directory specified 
+as the mount point, and see the collections (directories), and documents (json files). You may read, update, 
+or delete the documents. You may also read GridFs files under the specified prefix (`fs` by default).
 
+Don't forget to unmount the database when you are done (`umount /path/to/mount/dir`).
 
 ## Todo
-- [ ] Documents in `xxx.index` collections don't have `_id` fields, so they aren't listed yet
-- [ ] Support writes on [GridFS](http://www.mongodb.org/display/DOCS/GridFS) (http://godoc.org/labix.org/v2/mgo#GridFS)
-- [ ] Show file name instead of ID for GridFS files
+- [x] Support GridFS read 
+- [ ] Support GridFS write
+- [ ] Show GridFS file names
 
 ## Credits
 * Uses [bazil.org/fuse](http://bazil.org/fuse)
