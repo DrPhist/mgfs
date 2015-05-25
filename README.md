@@ -22,5 +22,6 @@ Don't forget to unmount the database when you are done (`umount /path/to/mount/d
 - [ ] Show GridFS file names
 
 ## Credits
-* Uses [bazil.org/fuse](http://bazil.org/fuse)
-* Uses [labix.org/mgo](http://labix.org/mgo)
+* [bazil.org/fuse](http://bazil.org/fuse)
+* [labix.org/mgo](http://labix.org/mgo)
+* [mountMgo](https://github.com/cryptix/mountMgo)
