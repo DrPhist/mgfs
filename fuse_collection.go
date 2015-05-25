@@ -73,3 +73,26 @@ func (c CollFile) ReadDirAll(ctx context.Context) (ents []fuse.Dirent, ferr erro
 
 	return ents, nil
 }
+
+func (c CollFile) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
+	log.Printf("DocumentFile.Remove(): %s/%s \n", c.Name, req.Name)
+
+	if !strings.HasSuffix(req.Name, ".json") {
+		return fuse.ENOENT
+	}
+	id := req.Name[0 : len(req.Name)-5]
+
+	if !bson.IsObjectIdHex(id) {
+		return fuse.ENOENT
+	}
+
+	db, s := getDb()
+	defer s.Close()
+
+	if err := db.C(c.Name).RemoveId(bson.ObjectIdHex(id)); err != nil {
+		log.Printf("Could not remove document '%s': %s \n", id, err.Error())
+		return fuse.EIO
+	}
+
+	return nil
+}
