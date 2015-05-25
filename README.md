@@ -11,12 +11,13 @@ run `mgfs`.
 ## How to use
 First mount your MongoDb database: `mgfs test /path/to/mount/dir`. You may now go to the directory specified 
 as the mount point, and see the collections (directories), and documents (json files). You may read, update, 
-or delete the documents. You may also read GridFs files under the specified prefix (`fs` by default).
+or delete the documents. You may also read and delete GridFs files under the specified prefix (`fs` by default).
 
 Don't forget to unmount the database when you are done (`umount /path/to/mount/dir`).
 
 ## Todo
 - [x] Support GridFS read 
+- [x] Support GridFS remove 
 - [ ] Support GridFS write
 - [ ] Show GridFS file names
 

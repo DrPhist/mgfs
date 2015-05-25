@@ -32,14 +32,13 @@ func (g GridFsFile) Attr(a *fuse.Attr) {
 	checkError(err)
 	defer file.Close()
 
-	now := time.Now()
 	a.Mode = 0400
 	a.Uid = uint32(os.Getuid())
 	a.Gid = uint32(os.Getgid())
 	a.Size = uint64(file.Size())
-	a.Ctime = now
-	a.Atime = now
-	a.Mtime = now
+	a.Ctime = file.UploadDate()
+	a.Atime = time.Now()
+	a.Mtime = file.UploadDate()
 }
 
 func (g GridFsFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {
