@@ -1,7 +1,7 @@
 mgfs
 ========
 
-Mounting a MongoDb database as a filesystem via [FUSE](https://bazil.org/fuse/).
+Mount a MongoDb database as a filesystem via [FUSE](https://bazil.org/fuse/).
 
 ## Installation
 You need to have [Golang](https://golang.org/doc/install) installed.
