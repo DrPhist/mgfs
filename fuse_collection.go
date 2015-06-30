@@ -19,6 +19,14 @@ type CollFile struct {
 	Fattr  fuse.Attr
 }
 
+func idQuery(id string) bson.M {
+	if bson.IsObjectIdHex(id) {
+		return bson.M{"_id": bson.ObjectIdHex(id)}
+	} else {
+		return bson.M{"_id": id}
+	}
+}
+
 func (f CollFile) Attr(a *fuse.Attr) {
 	log.Printf("CollFile.Attr() for: %+v", f)
 	a.Mode = os.ModeDir | 0700
@@ -34,15 +42,11 @@ func (c CollFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {
 	}
 	fname = fname[0 : len(fname)-5]
 
-	if !bson.IsObjectIdHex(fname) {
-		return nil, fuse.ENOENT
-	}
-
 	db, s := getDb()
 	defer s.Close()
 
 	var f DocumentFile
-	err := db.C(c.Name).FindId(bson.ObjectIdHex(fname)).One(&f)
+	err := db.C(c.Name).Find(idQuery(fname)).One(&f)
 	if err != nil {
 		log.Printf("Error while looking up %s: %s \n", fname, err.Error())
 		return nil, fuse.EIO
@@ -59,11 +63,15 @@ func (c CollFile) ReadDirAll(ctx context.Context) (ents []fuse.Dirent, ferr erro
 	db, s := getDb()
 	defer s.Close()
 
-	iter := db.C(c.Name).Find(nil).Select(bson.M{"text": 0}).Iter()
+	iter := db.C(c.Name).Find(nil).Iter()
 
 	var f DocumentFile
 	for iter.Next(&f) {
-		ents = append(ents, fuse.Dirent{Name: f.Id.Hex() + ".json", Type: fuse.DT_File})
+		if strId, ok := f.Id.(string); ok {
+			ents = append(ents, fuse.Dirent{Name: strId + ".json", Type: fuse.DT_File})
+		} else {
+			ents = append(ents, fuse.Dirent{Name: f.Id.(bson.ObjectId).Hex() + ".json", Type: fuse.DT_File})
+		}
 	}
 
 	if err := iter.Err(); err != nil {
@@ -82,14 +90,10 @@ func (c CollFile) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
 	}
 	id := req.Name[0 : len(req.Name)-5]
 
-	if !bson.IsObjectIdHex(id) {
-		return fuse.ENOENT
-	}
-
 	db, s := getDb()
 	defer s.Close()
 
-	if err := db.C(c.Name).RemoveId(bson.ObjectIdHex(id)); err != nil {
+	if err := db.C(c.Name).Remove(idQuery(id)); err != nil {
 		log.Printf("Could not remove document '%s': %s \n", id, err.Error())
 		return fuse.EIO
 	}

@@ -15,7 +15,7 @@ import (
 // DocumentFile implements both Node and Handle for a document from a collection.
 type DocumentFile struct {
 	coll string
-	Id   bson.ObjectId `bson:"_id"`
+	Id   interface{} `bson:"_id"`
 
 	Dirent fuse.Dirent
 	Fattr  fuse.Attr
@@ -23,6 +23,10 @@ type DocumentFile struct {
 	CTime time.Time
 	ATime time.Time
 	MTime time.Time
+}
+
+func (d DocumentFile) idQuery() bson.M {
+	return bson.M{"_id": d.Id}
 }
 
 func (d DocumentFile) Attr(a *fuse.Attr) {
@@ -74,7 +78,8 @@ func (d DocumentFile) readDocument() (string, uint64, error) {
 	defer s.Close()
 
 	var f interface{}
-	err := db.C(d.coll).FindId(d.Id).One(&f)
+
+	err := db.C(d.coll).Find(d.idQuery()).One(&f)
 	if err != nil {
 		log.Fatal(err)
 		return "", 0, fuse.EIO
@@ -99,14 +104,15 @@ func (d DocumentFile) Write(ctx context.Context, req *fuse.WriteRequest, resp *f
 	doc := make(map[string]string)
 	err := json.Unmarshal(req.Data, &doc)
 	if err != nil {
+		log.Printf("Could not parse the data as JSON[%s]: %s \n", d.Id, err.Error())
 		return fuse.EIO
 	}
 
 	delete(doc, "_id") // _id cannot be updated!
 
-	err = db.C(d.coll).UpdateId(d.Id, doc)
+	err = db.C(d.coll).Update(d.idQuery(), bson.M{"$set": doc})
 	if err != nil {
-		log.Printf("Could not update the document[%s]: %s \n", d.Id.Hex(), err.Error())
+		log.Printf("Could not update the document[%s]: %s \n", d.Id, err.Error())
 		return fuse.EIO
 	}
 	d.MTime = time.Now() // update last modified time
