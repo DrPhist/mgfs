@@ -5,7 +5,7 @@ Mount a MongoDb database as a filesystem via [FUSE](https://bazil.org/fuse/).
 
 ## Installation
 You need to have [Golang](https://golang.org/doc/install) installed.
-Open your terminal, and run `go get github.com/amsa/mgfs` and then `go install github.com/amsa/mgfs`. Now you should be able to run `mgfs` (be sure to add $GOPATH/bin to your $PATH).
+Open your terminal, and run `go get github.com/amsa/mgfs`. Now you should be able to run `mgfs` (be sure to add $GOPATH/bin to your $PATH).
 
 ## How to use
 First mount your MongoDb database: `mgfs test /path/to/mount/dir`. You may now go to the directory specified 
