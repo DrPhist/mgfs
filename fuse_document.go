@@ -101,7 +101,7 @@ func (d DocumentFile) Write(ctx context.Context, req *fuse.WriteRequest, resp *f
 	db, s := getDb()
 	defer s.Close()
 
-	doc := make(map[string]string)
+	doc := make(map[string]interface{})
 	err := json.Unmarshal(req.Data, &doc)
 	if err != nil {
 		log.Printf("Could not parse the data as JSON[%s]: %s \n", d.Id, err.Error())
