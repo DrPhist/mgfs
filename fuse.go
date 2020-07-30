@@ -51,10 +51,12 @@ type Dir struct {
 	name string
 }
 
-func (d Dir) Attr(a *fuse.Attr) {
+//func (d Dir) Attr(a *fuse.Attr) {
+func (d Dir) Attr(ctx context.Context, a *fuse.Attr) error {
 	log.Println("Dir.Attr() for ", d.name)
 	a.Inode = 1
 	a.Mode = os.ModeDir | 0555
+	return nil
 }
 
 func (Dir) Lookup(ctx context.Context, name string) (fs.Node, error) {

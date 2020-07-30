@@ -9,8 +9,8 @@ import (
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
 	"golang.org/x/net/context"
-	"labix.org/v2/mgo"
-	"labix.org/v2/mgo/bson"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // GridFs implements both Node and Handle for a collection.
@@ -21,11 +21,13 @@ type GridFs struct {
 	Fattr  fuse.Attr
 }
 
-func (g GridFs) Attr(a *fuse.Attr) {
+//func (g GridFs) Attr(a *fuse.Attr) {
+func (g GridFs) Attr(ctx context.Context, a *fuse.Attr) error {
 	log.Printf("GridFs.Attr() for: %+v", g)
 	a.Mode = os.ModeDir | 0700
 	a.Uid = uint32(os.Getuid())
 	a.Gid = uint32(os.Getgid())
+	return nil
 }
 
 func (g GridFs) Lookup(ctx context.Context, fname string) (fs.Node, error) {

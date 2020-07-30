@@ -9,7 +9,7 @@ import (
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
 	"golang.org/x/net/context"
-	"labix.org/v2/mgo/bson"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // DocumentFile implements both Node and Handle for a document from a collection.
@@ -29,12 +29,12 @@ func (d DocumentFile) idQuery() bson.M {
 	return bson.M{"_id": d.Id}
 }
 
-func (d DocumentFile) Attr(a *fuse.Attr) {
+func (d DocumentFile) Attr(ctx context.Context, a *fuse.Attr) error {
 	log.Printf("DocumentFile.Attr() for: %+v", d)
 	_, size, err := d.readDocument()
 
 	if err != nil {
-		return
+		return err
 	}
 
 	if d.CTime.IsZero() {
@@ -51,6 +51,7 @@ func (d DocumentFile) Attr(a *fuse.Attr) {
 	a.Ctime = d.CTime
 	a.Atime = d.ATime
 	a.Mtime = d.MTime
+	return nil
 }
 
 func (d DocumentFile) Lookup(ctx context.Context, fname string) (fs.Node, error) {

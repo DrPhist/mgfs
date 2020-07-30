@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 var appName string = "mgfs"
@@ -20,22 +20,22 @@ func main() {
 	app.Version = "0.2"
 
 	app.Flags = []cli.Flag{
-		cli.StringFlag{Name: "addr, a", Value: "localhost", Usage: "MongoDb host to connect to"},
-		cli.IntFlag{Name: "port, p", Value: 27017, Usage: "MongoDb port to connect to"},
-		cli.StringFlag{Name: "user, u", Value: "", Usage: "username to access MongoDb"},
-		cli.StringFlag{Name: "password, P", Value: "", Usage: "password to access MongoDb"},
-		cli.StringFlag{Name: "gridfs, g", Value: "fs", Usage: "GridFS prefix"},
+		&cli.StringFlag{Name: "addr, a", Value: "localhost", Usage: "MongoDb host to connect to"},
+		&cli.IntFlag{Name: "port, p", Value: 27017, Usage: "MongoDb port to connect to"},
+		&cli.StringFlag{Name: "user, u", Value: "", Usage: "username to access MongoDb"},
+		&cli.StringFlag{Name: "password, P", Value: "", Usage: "password to access MongoDb"},
+		&cli.StringFlag{Name: "gridfs, g", Value: "fs", Usage: "GridFS prefix"},
 	}
 
-	app.Action = func(c *cli.Context) {
+	app.Action = func(c *cli.Context) error {
 
-		if len(c.Args()) != 2 {
+		if c.NArg() != 2 {
 			log.Fatal("Usage: " + appName + " <dbname> <mountpoint>")
 			os.Exit(2)
 		}
 
-		dbName := c.Args()[0]
-		mountPoint := c.Args()[1]
+		dbName := c.Args().Get(0)
+		mountPoint := c.Args().Get(1)
 		dbHost := c.String("addr")
 		dbPort := string(c.String("port"))
 		dbUser := c.String("user")
@@ -49,6 +49,7 @@ func main() {
 		// Mount the database
 		err := mount(mountPoint, appName)
 		checkErrorAndExit(err, 1)
+		return nil
 	}
 
 	app.Run(os.Args)
